@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 CLIENT_ID = '24s3PNTHFbHsoA' #SET THIS TO THE ID UNDER PREFERENCES/APPS
 CLIENT_SECRET = '5HuUzRcISFNWza5Bm-CkHipm0-A' #SET THIS TO THE SECRET UNDER PREFERENCES/APPS
-owner_scope = 'modothers' #SET THIS. SEE http://praw.readthedocs.org/en/latest/pages/oauth.html#oauth-scopes FOR DETAILS.
+owner_scope = 'identity modothers' #SET THIS. SEE http://praw.readthedocs.org/en/latest/pages/oauth.html#oauth-scopes FOR DETAILS.
 participant_scope = 'identity modself'
 
 owner = ''
@@ -43,8 +43,9 @@ def authorized():
 		return auth_owner(owner_client, request.args.get('code', ''))
 
 def auth_owner(client, code):
+	global owner
 	client.auth.authorize(code)
-	user = r.user.me()
+	owner = r.user.me().name
 	text = 'The Box started on account /u/'+user.name
 	return text
 
@@ -56,18 +57,25 @@ def auth_participant(client, code):
 
 def mod_user(participant_client):
 	#check mods with owner client
+	#filter out owner so you don't demod yourself
 	mods = list(filter((lambda user: user.name!=owner), subreddit.moderator)
 	
 	#maybe remove
 	while(len(mods) > temp_mods):
 		to_remove = mods[rand.randint(0, len(mods))]
+		print("Removing " + to_remove.name " of possible:")
+		print(mods)
 		subreddit.moderator.remove(to_remove)
 		mods.remove(to_remove)
 
-	#add user with owner client
-	subreddit.moderator.add(participant_client.user.me())
+	#add participant with owner client
+	print("Inviting " + participant_client.user.me().name)
+	subreddit.moderator.invite(participant_client.user.me())
 
 	#accept user with participant client
+	print("Accepting for " +participant_client.user.me().name)
+	temp_sub = participant_client.subreddit(subreddit.display_name)
+	temp_sub.moderator.add(participant_client.user.me())
 
 owner_client = praw.Reddit(
 	client_id=CLIENT_ID,
