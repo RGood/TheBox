@@ -4,7 +4,7 @@ import time, praw
 import webbrowser
 from flask import Flask, request
 from threading import Thread
-
+from random import Random
 #==================================================End Config======================================================
 #==================================================OAUTH APPROVAL==================================================
 app = Flask(__name__)
@@ -13,6 +13,11 @@ CLIENT_ID = '24s3PNTHFbHsoA' #SET THIS TO THE ID UNDER PREFERENCES/APPS
 CLIENT_SECRET = '5HuUzRcISFNWza5Bm-CkHipm0-A' #SET THIS TO THE SECRET UNDER PREFERENCES/APPS
 owner_scope = 'modothers' #SET THIS. SEE http://praw.readthedocs.org/en/latest/pages/oauth.html#oauth-scopes FOR DETAILS.
 participant_scope = 'identity modself'
+
+owner = ''
+subreddit = ''
+temp_mods = 5
+rand = Random()
 
 REDIRECT_URI = 'http://127.0.0.1:65010/authorize_callback'
 
@@ -51,8 +56,17 @@ def auth_participant(client, code):
 
 def mod_user(participant_client):
 	#check mods with owner client
-	#maybe remove one
+	mods = list(filter((lambda user: user.name!=owner), subreddit.moderator)
+	
+	#maybe remove
+	while(len(mods) > temp_mods):
+		to_remove = mods[rand.randint(0, len(mods))]
+		subreddit.moderator.remove(to_remove)
+		mods.remove(to_remove)
+
 	#add user with owner client
+	subreddit.moderator.add(participant_client.user.me())
+
 	#accept user with participant client
 
 owner_client = praw.Reddit(
