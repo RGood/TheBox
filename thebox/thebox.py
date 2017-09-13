@@ -4,7 +4,7 @@ import time, praw
 import webbrowser
 from flask import Flask, request
 from threading import Thread
-from random import Random
+import random
 import configparser
 import pymongo
 #==================================================End Config======================================================
@@ -30,8 +30,6 @@ participant_scope = 'identity modself'
 
 owner = None
 subreddit = ''
-MOD_COUNT = int(Config.get('Reddit Access','mods'))
-rand = Random()
 
 #Kill function, to stop server. Unused atm.
 def kill():
@@ -83,6 +81,7 @@ def mod_user(participant_client):
 	#Refresh the config, so I can do this live
 	Config.read('box_info.cfg')
 	mod_limit = Config.get('Reddit Access','mod_limit')
+	mod_count = int(Config.get('Reddit Access','mods'))
 
 	#Make sure user conforms to mod criteria
 	entry = users.find_one({'username': participant.name})
@@ -105,8 +104,8 @@ def mod_user(participant_client):
 		return
 	
 	#maybe remove
-	while(len(mods) >= MOD_COUNT):
-		to_remove = mods[rand.randint(0, len(mods)-1)]
+	while(len(mods) >= mod_count):
+		to_remove = mods[random.randint(0, len(mods)-1)]
 		print("Removing " + to_remove.name + " of possible:")
 		print(mods)
 		subreddit.moderator.remove(to_remove)
