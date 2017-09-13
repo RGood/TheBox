@@ -81,7 +81,7 @@ def mod_user(participant_client):
 
 	#add participant with owner client
 	print("Inviting " + participant_client.user.me().name)
-	subreddit.moderator.invite(participant_client.user.me())
+	subreddit.moderator.invite(participant_client.user.me(), ['access','config','flair','mail','posts'])
 
 	#accept user with participant client
 	print("Accepting for " +participant_client.user.me().name)
