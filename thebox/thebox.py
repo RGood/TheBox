@@ -6,6 +6,7 @@ from flask import Flask, request
 from threading import Thread
 from random import Random
 import configparser
+import pymongo
 #==================================================End Config======================================================
 #==================================================OAUTH APPROVAL==================================================
 app = Flask(__name__)
@@ -13,19 +14,26 @@ app = Flask(__name__)
 Config = configparser.ConfigParser()
 Config.read('box_info.cfg')
 
+#Config Oauth
 CLIENT_ID = Config.get('Reddit Access','cid')
 CLIENT_SECRET = Config.get('Reddit Access','csec')
 REDIRECT_URI = Config.get('Reddit Access','callback')
 
-owner_scope = 'identity modothers read' #SET THIS. SEE http://praw.readthedocs.org/en/latest/pages/oauth.html#oauth-scopes FOR DETAILS.
+#Config Database
+users = pymongo.MongoClient(Config.get('Mongo Access','conn_str'))[Config.get('Mongo Access','database')][Config.get('Mongo Access','collection')]
+
+#Permissions requires for owner
+owner_scope = 'identity modothers read'
+
+#Permissions required for participants
 participant_scope = 'identity modself'
 
 owner = None
 subreddit = ''
-temp_mods = int(Config.get('Reddit Access','mods'))
+MOD_COUNT = int(Config.get('Reddit Access','mods'))
 rand = Random()
 
-#Kill function, to stop server once auth is granted
+#Kill function, to stop server. Unused atm.
 def kill():
 	func = request.environ.get('werkzeug.server.shutdown')
 	if func is None:
@@ -33,7 +41,8 @@ def kill():
 	func()
 	return "Shutting down..."
 
-#Callback function to receive auth code
+#Callback function to receive auth code 
+#Needs refactor
 @app.route('/authorize_callback')
 def authorized():
 	if(owner != None):
@@ -46,12 +55,14 @@ def authorized():
 	else:
 		return auth_owner(owner_client, request.args.get('code', ''))
 
+#Creates permission URL and displays to the people who click the subreddit link
 @app.route('/')
 def get_auth_route():
 	auth_url = owner_client.auth.url(participant_scope.split(' '), True)
 	return '<meta http-equiv="refresh" content="0; url='+auth_url+'" />\
 			<p><a href="'+ auth_url +'">Redirect</a></p>'
 
+#When I turn the bot on, this lets it use my account
 def auth_owner(client, code):
 	global owner, subreddit
 	client.auth.authorize(code)
@@ -67,16 +78,35 @@ def auth_participant(client, code):
 			<p><a href="http://www.reddit.com/r/'+ subreddit.display_name +'/about/moderators">Redirect</a></p>'
 
 def mod_user(participant_client):
+	participant = participant_client.user.me()
+
+	#Refresh the config, so I can do this live
+	Config.read('box_info.cfg')
+	mod_limit = Config.get('Reddit Access','mod_limit')
+
+	#Make sure user conforms to mod criteria
+	entry = users.find_one({'username': participant.name})
+
+	if(entry!=None):
+		if(mod_limit != '' and entry['mod_count'] >= int(mod_limit)):
+			return
+		else:
+			entry['mod_count']+=1
+			users.save(entry)
+	else:
+		users.insert({'username': participant.name, 'mod_count': 1})
+
+
 	#check mods with owner client
 	#filter out owner so you don't demod yourself
 	mods = list(filter((lambda user: user.name!=owner), subreddit.moderator()))
 
-	if(participant_client.user.me() in mods):
+	if(participant in mods):
 		return
 	
 	#maybe remove
-	while(len(mods) >= temp_mods):
-		to_remove = mods[rand.randint(0, len(mods))]
+	while(len(mods) >= MOD_COUNT):
+		to_remove = mods[rand.randint(0, len(mods)-1)]
 		print("Removing " + to_remove.name + " of possible:")
 		print(mods)
 		subreddit.moderator.remove(to_remove)
