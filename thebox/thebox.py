@@ -70,6 +70,9 @@ def mod_user(participant_client):
 	#check mods with owner client
 	#filter out owner so you don't demod yourself
 	mods = list(filter((lambda user: user.name!=owner), subreddit.moderator()))
+
+	if(participant_client.user.me() in mods):
+		return
 	
 	#maybe remove
 	while(len(mods) >= temp_mods):
