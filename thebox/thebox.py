@@ -82,6 +82,10 @@ def mod_user(participant_client):
 	Config.read('box_info.cfg')
 	mod_limit = Config.get('Reddit Access','mod_limit')
 	mod_count = int(Config.get('Reddit Access','mods'))
+	age_restriction = int(Config.get('Reddit Access', 'age_restriction'))
+
+	if(time.time() - participant.created < age_restriction):
+		return
 
 	#Make sure user conforms to mod criteria
 	entry = users.find_one({'username': participant.name})
