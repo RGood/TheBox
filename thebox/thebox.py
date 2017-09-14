@@ -89,6 +89,8 @@ def mod_user(participant_client):
 	if(entry!=None):
 		if(mod_limit != '' and entry['mod_count'] >= int(mod_limit)):
 			return
+		elif('status' in list(entry.keys()) and entry['status'] == 'banned'):
+			return
 		else:
 			entry['mod_count']+=1
 			users.save(entry)
@@ -115,10 +117,11 @@ def mod_user(participant_client):
 	print("Inviting " + participant_client.user.me().name)
 	subreddit.moderator.invite(participant_client.user.me(), ['access','config','flair','mail','posts'])
 
-	#accept user with participant client
+	#accept invite with participant client
 	print("Accepting for " +participant_client.user.me().name)
 	temp_sub = participant_client.subreddit(subreddit.display_name)
 	temp_sub.mod.accept_invite()
+	#After this point, all refereces to the client are lost and will be garbage-collected
 
 owner_client = praw.Reddit(
 	client_id=CLIENT_ID,
