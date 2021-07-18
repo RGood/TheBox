@@ -31,15 +31,7 @@ participant_scope = 'identity modself'
 owner = None
 subreddit = ''
 
-#Kill function, to stop server. Unused atm.
-def kill():
-	func = request.environ.get('werkzeug.server.shutdown')
-	if func is None:
-		raise RuntimeError('Not running with the Werkzeug Server')
-	func()
-	return "Shutting down..."
-
-#Callback function to receive auth code 
+#Callback function to receive auth code
 #Needs refactor
 @app.route('/authorize_callback')
 def authorized():
@@ -59,15 +51,6 @@ def get_auth_route():
 	auth_url = owner_client.auth.url(participant_scope.split(' '), True)
 	return '<meta http-equiv="refresh" content="0; url='+auth_url+'" />\
 			<p><a href="'+ auth_url +'">Redirect</a></p>'
-
-#When I turn the bot on, this lets it use my account
-def auth_owner(client, code):
-	global owner, subreddit
-	client.auth.authorize(code)
-	owner = client.user.me().name
-	subreddit = client.subreddit(Config.get('Reddit Access','subreddit'))
-	text = 'The Box started on account /u/'+owner
-	return text
 
 def auth_participant(client, code):
 	client.auth.authorize(code)
@@ -108,7 +91,7 @@ def mod_user(participant_client):
 
 	if(participant in mods):
 		return
-	
+
 	#maybe remove
 	while(len(mods) >= mod_count):
 		to_remove = mods[random.randint(0, len(mods)-1)]
@@ -130,12 +113,11 @@ def mod_user(participant_client):
 owner_client = praw.Reddit(
 	client_id=CLIENT_ID,
 	client_secret=CLIENT_SECRET,
-	redirect_uri=REDIRECT_URI,
+	username=Config.get('Reddit Access','username'),
+	password=Config.get('Reddit Access','password'),
 	user_agent='The Box Bot'
 	)
 
-print("Owner Auth")
-print(owner_client.auth.url(owner_scope.split(' '),True))
 print("User Auth")
 print(owner_client.auth.url(participant_scope.split(' '), True))
 app.run(debug=False, port=65010)
