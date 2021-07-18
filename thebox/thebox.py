@@ -28,8 +28,6 @@ owner_scope = 'identity modothers read'
 #Permissions required for participants
 participant_scope = 'identity modself'
 
-subreddit = ''
-
 #Callback function to receive auth code
 #Needs refactor
 @app.route('/authorize_callback')
@@ -114,6 +112,8 @@ owner_client = praw.Reddit(
 	password=Config.get('Reddit Access','password'),
 	user_agent='The Box Bot'
 	)
+
+subreddit = owner_client.subreddit(Config.get('Reddit Access','subreddit'))
 
 print("User Auth")
 print(owner_client.auth.url(participant_scope.split(' '), True))
