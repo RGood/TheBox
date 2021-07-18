@@ -113,6 +113,7 @@ owner_client = praw.Reddit(
 	user_agent='The Box Bot'
 	)
 
+owner = owner_client.user.me().name
 subreddit = owner_client.subreddit(Config.get('Reddit Access','subreddit'))
 
 print("User Auth")
