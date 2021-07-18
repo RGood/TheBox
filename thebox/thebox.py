@@ -28,22 +28,18 @@ owner_scope = 'identity modothers read'
 #Permissions required for participants
 participant_scope = 'identity modself'
 
-owner = None
 subreddit = ''
 
 #Callback function to receive auth code
 #Needs refactor
 @app.route('/authorize_callback')
 def authorized():
-	if(owner != None):
-		return auth_participant(praw.Reddit(
-			client_id=CLIENT_ID,
-			client_secret=CLIENT_SECRET,
-			redirect_uri=REDIRECT_URI,
-			user_agent='Mod Permissions'
-			), request.args.get('code', ''))
-	else:
-		return auth_owner(owner_client, request.args.get('code', ''))
+	return auth_participant(praw.Reddit(
+		client_id=CLIENT_ID,
+		client_secret=CLIENT_SECRET,
+		redirect_uri=REDIRECT_URI,
+		user_agent='Mod Permissions'
+		), request.args.get('code', ''))
 
 #Creates permission URL and displays to the people who click the subreddit link
 @app.route('/')
