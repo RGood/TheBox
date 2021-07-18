@@ -81,7 +81,13 @@ def mod_user(participant_client):
 
 	#check mods with owner client
 	#filter out owner so you don't demod yourself
-	mods = list(filter((lambda user: user.name!=owner), subreddit.moderator()))
+	seen_self = False
+	mods = []
+	for mod in subreddit.moderator():
+		if(seen_self):
+			mods+=[mod]
+		if(mod.name == owner):
+			seen_self = True
 
 	if(participant in mods):
 		return
