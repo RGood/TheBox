@@ -113,6 +113,7 @@ def mod_user(participant_client):
 owner_client = praw.Reddit(
 	client_id=CLIENT_ID,
 	client_secret=CLIENT_SECRET,
+	redirect_uri=REDIRECT_URI,
 	username=Config.get('Reddit Access','username'),
 	password=Config.get('Reddit Access','password'),
 	user_agent='The Box Bot'
